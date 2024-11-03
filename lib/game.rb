@@ -8,11 +8,16 @@ class Game
   MAN = ["\sO", "\sO\n\s|", "\sO\n\\|", "\sO\n\\|/", "\sO\n\\|/\n\s|", "\sO\n\\|/\n\s|\n/",
          "\sO\n\\|/\n\s|\n/\s\\"].freeze
 
-  def initialize
-    self.word = make_word('google-10000-english-no-swears.txt', 5, 12)
-    self.spaces = Array.new(word.length, '_')
-    self.lives = 7
-    self.wrong = []
+  def initialize(save: false)
+    # load method first which fills out all of this variable data isntead, optionally
+    if save
+      load_game(save)
+    else
+      self.word = make_word('google-10000-english-no-swears.txt', 5, 12)
+      self.spaces = Array.new(word.length, '_')
+      self.lives = 7
+      self.wrong = []
+    end
   end
 
   # selects a valid word from the list of words
@@ -39,11 +44,14 @@ class Game
     puts "#{enum(spaces)}\n\n#{enum(wrong).colorize(:red)}\n\n#{hangman}\n\nLIFE: #{lives}"
   end
 
-  # ensures guesses are letters
+  # ensures input is a letter or save/exit command
   def guess
-    print "\n\nGUESS A LETTER:\s"
-    letter = gets.chomp
-    letter.match?(/[a-zA-Z]/) && letter.length == 1 && !wrong.include?(letter) ? letter.downcase : guess
+    print "\n\nGUESS A LETTER or TYPE (s) TO SAVE (e) TO EXIT:\s"
+    letter = gets.chomp.downcase
+
+    exit if letter == '(e)'
+    save_game if letter == '(s)'
+    letter.match?(/[a-zA-Z]/) && letter.length == 1 && !wrong.include?(letter) ? letter : guess
   end
 
   # checks letter and adds guess to appropriate word bank
@@ -77,5 +85,11 @@ class Game
     display
     check_letter(guess)
     manage
+  end
+
+  # saves game and notifies player
+  def save_game
+    File.open('save.yml', 'w') { |file| file.write(YAML.dump(self)) }
+    puts '***SAVED***'
   end
 end
